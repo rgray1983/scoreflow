@@ -384,13 +384,15 @@ function startTimedConfetti(ms) {
 }
 
 function showWinner(team) {
-  els.winnerText.textContent = `${teamName(team)} Win!`;
+  els.winnerText.textContent = `${teamName(team)} Wins!`;
+  document.body.classList.add("celebrating");
   els.winnerOverlay.classList.add("show");
   startConfetti();
 }
 
 function hideWinner() {
   els.winnerOverlay.classList.remove("show");
+  document.body.classList.remove("celebrating");
 }
 
 function closeWinner() {

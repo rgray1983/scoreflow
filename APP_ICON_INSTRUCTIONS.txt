@@ -1,6 +1,4 @@
-ScoreFlow app icon placeholder
-
-Replace these files with your finished app icon:
+ScoreFlow app icon files:
 - app-icon-180.png  (Apple Home Screen)
 - app-icon-192.png  (Android/PWA)
 - app-icon-512.png  (Android/PWA high resolution)
@@ -8,9 +6,7 @@ Replace these files with your finished app icon:
 Keep the exact same filenames and sizes if possible.
 After pushing to GitHub Pages, remove and re-add ScoreFlow to the phone Home Screen to see the new icon.
 
-
-Splash screen logo:
-- splash-logo.png controls the logo shown on the animated startup/splash screen.
-- Replace splash-logo.png with any PNG you want.
-- Keep the filename exactly the same.
-- The bouncing volleyball is CSS-based, so you can change the logo without touching the animation.
+Splash screen files:
+- splash-logo.png controls the main logo shown on the animated startup/splash screen.
+- volleyball.png controls the bouncing volleyball accent.
+- Keep both filenames exactly the same.

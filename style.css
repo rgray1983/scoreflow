@@ -838,9 +838,10 @@ body.setup-active .rotate-message {
   display: grid;
   place-items: center;
   align-content: center;
-  gap: 16px;
+  gap: 12px;
+  padding: calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 18px);
   background:
-    radial-gradient(circle at 50% 30%, rgba(255, 209, 102, 0.16), transparent 30vh),
+    radial-gradient(circle at 50% 32%, rgba(255, 209, 102, 0.13), transparent 28vh),
     linear-gradient(145deg, #070a12 0%, #101827 56%, #05070c 100%);
   color: var(--text);
   transition: opacity 0.34s ease, visibility 0.34s ease;
@@ -854,89 +855,67 @@ body.splash-done .splash-screen {
 
 .splash-logo-stage {
   position: relative;
-  width: 210px;
-  height: 210px;
+  width: min(68vw, 280px);
+  height: min(68vw, 280px);
   display: grid;
   place-items: center;
   animation: splashLogoIn 0.58s cubic-bezier(.17,.89,.32,1.25) both;
 }
 
 .splash-logo-img {
-  width: 170px;
-  height: 170px;
+  width: min(64vw, 250px);
+  height: min(64vw, 250px);
   object-fit: contain;
-  border-radius: 28px;
-  filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 24px rgba(255,209,102,0.25));
+  border-radius: 0;
+  filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 24px rgba(255,209,102,0.22));
   animation: splashLogoGlow 1.25s ease-in-out infinite alternate;
 }
 
 .splash-volleyball {
   position: absolute;
-  right: 16px;
-  bottom: 22px;
-  width: 52px;
-  height: 52px;
+  right: clamp(22px, 7vw, 38px);
+  bottom: clamp(28px, 8vw, 44px);
+  width: clamp(34px, 12vw, 48px);
+  height: clamp(34px, 12vw, 48px);
   object-fit: contain;
   border-radius: 50%;
   filter:
-    drop-shadow(0 10px 18px rgba(0,0,0,0.45))
-    drop-shadow(0 0 12px rgba(255,209,102,0.38));
-  animation: splashBounce 0.68s ease-in-out infinite;
+    drop-shadow(0 8px 15px rgba(0,0,0,0.46))
+    drop-shadow(0 0 10px rgba(255,209,102,0.32));
+  animation: splashBounce 0.72s ease-in-out infinite;
 }
 
-.volley-curve {
-  display: none;
-}
-
-.curve-one {
-  width: 54px;
-  height: 34px;
-  left: -12px;
-  top: 5px;
-  transform: rotate(20deg);
-}
-
-.curve-two {
-  width: 34px;
-  height: 54px;
-  right: -4px;
-  top: -10px;
-  transform: rotate(-22deg);
-}
-
+.volley-curve,
+.curve-one,
+.curve-two,
 .curve-three {
-  width: 46px;
-  height: 30px;
-  left: 4px;
-  bottom: -9px;
-  transform: rotate(-16deg);
+  display: none;
 }
 
 .splash-shadow {
   position: absolute;
-  right: 18px;
-  bottom: 10px;
-  width: 56px;
-  height: 11px;
+  right: clamp(24px, 7vw, 40px);
+  bottom: clamp(20px, 6vw, 32px);
+  width: clamp(34px, 12vw, 50px);
+  height: 8px;
   border-radius: 999px;
   background: rgba(0,0,0,0.34);
   filter: blur(2px);
-  animation: splashShadow 0.68s ease-in-out infinite;
+  animation: splashShadow 0.72s ease-in-out infinite;
 }
 
+/* The splash-logo.png artwork already contains the ScoreFlow branding,
+   so the extra text under it is hidden to keep the startup screen clean. */
 .splash-logo {
-  display: grid;
-  gap: 6px;
-  text-align: center;
-  animation: splashTextIn 0.52s ease 0.16s both;
+  display: none;
 }
 
 .splash-logo span {
   color: var(--gold);
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  font-size: clamp(1.1rem, 4.8vw, 1.55rem);
+  font-size: clamp(0.9rem, 3.8vw, 1.1rem);
 }
 
 .splash-logo small {
@@ -944,27 +923,27 @@ body.splash-done .splash-screen {
   font-weight: 900;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-size: clamp(0.62rem, 2.6vw, 0.78rem);
+  font-size: clamp(0.55rem, 2.3vw, 0.68rem);
 }
 
 @keyframes splashLogoIn {
-  from { opacity: 0; transform: scale(0.86); }
+  from { opacity: 0; transform: scale(0.88); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes splashLogoGlow {
-  from { filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 12px rgba(255,209,102,0.2)); }
-  to { filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 32px rgba(255,209,102,0.42)); }
+  from { filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 10px rgba(255,209,102,0.16)); }
+  to { filter: drop-shadow(0 18px 38px rgba(0,0,0,0.48)) drop-shadow(0 0 26px rgba(255,209,102,0.34)); }
 }
 
 @keyframes splashBounce {
-  0%, 100% { transform: translateY(0) rotate(-8deg) scale(1); }
-  50% { transform: translateY(-18px) rotate(10deg) scale(1.04); }
+  0%, 100% { transform: translateY(0) rotate(-7deg) scale(1); }
+  50% { transform: translateY(-14px) rotate(9deg) scale(1.03); }
 }
 
 @keyframes splashShadow {
-  0%, 100% { transform: scale(1); opacity: 0.35; }
-  50% { transform: scale(0.7); opacity: 0.18; }
+  0%, 100% { transform: scale(1); opacity: 0.34; }
+  50% { transform: scale(0.72); opacity: 0.18; }
 }
 
 @keyframes splashTextIn {
@@ -974,22 +953,40 @@ body.splash-done .splash-screen {
 
 @media (orientation: portrait) {
   .splash-logo-stage {
-    width: 210px;
-    height: 210px;
+    width: min(72vw, 285px);
+    height: min(72vw, 285px);
   }
 
   .splash-logo-img {
-    width: 170px;
-    height: 170px;
+    width: min(68vw, 255px);
+    height: min(68vw, 255px);
   }
 
   .splash-volleyball {
-    width: 52px;
-    height: 52px;
-    right: 16px;
-    bottom: 22px;
+    right: clamp(22px, 8vw, 40px);
+    bottom: clamp(30px, 9vw, 46px);
+    width: clamp(36px, 13vw, 50px);
+    height: clamp(36px, 13vw, 50px);
   }
 }
+
+@media (max-height: 680px) and (orientation: portrait) {
+  .splash-logo-stage {
+    width: min(64vw, 240px);
+    height: min(64vw, 240px);
+  }
+
+  .splash-logo-img {
+    width: min(60vw, 218px);
+    height: min(60vw, 218px);
+  }
+
+  .splash-volleyball {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 
 
 /* Smart rotate-state restore: after portrait setup is saved, show the rotate screen again until landscape. */

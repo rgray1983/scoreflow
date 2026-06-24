@@ -88,6 +88,7 @@ const els = {
   winnerOverlay: $("winnerOverlay"),
   winnerText: $("winnerText"),
   viewerLink: $("viewerLink"),
+  nativeShareBtn: $("nativeShareBtn"),
   firebaseNote: $("firebaseNote")
 };
 
@@ -548,6 +549,33 @@ async function copyViewerLink() {
   toast("Viewer link copied");
 }
 
+async function shareViewerLink() {
+  if (!els.viewerLink.value) {
+    toast("Create a live game first", true);
+    return;
+  }
+
+  const shareData = {
+    title: "ScoreFlow Live Score",
+    text: "Follow the live score here:",
+    url: els.viewerLink.value
+  };
+
+  if (navigator.share) {
+    try {
+      await navigator.share(shareData);
+      toast("Share screen opened");
+      return;
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      console.error(error);
+    }
+  }
+
+  await navigator.clipboard.writeText(els.viewerLink.value);
+  toast("Sharing not supported here — link copied");
+}
+
 function handleLogo(input, img, picker) {
   if (isViewer) return;
   const file = input.files?.[0];
@@ -717,6 +745,7 @@ function wireEvents() {
   $("saveSettingsBtn").addEventListener("click", saveSettings);
   $("createLiveBtn").addEventListener("click", createLiveGame);
   $("copyLinkBtn").addEventListener("click", copyViewerLink);
+  els.nativeShareBtn?.addEventListener("click", shareViewerLink);
   els.homeLogoInput.addEventListener("change", () => handleLogo(els.homeLogoInput, els.homeLogo, els.homeLogoInput.closest(".logo-picker")));
   els.awayLogoInput.addEventListener("change", () => handleLogo(els.awayLogoInput, els.awayLogo, els.awayLogoInput.closest(".logo-picker")));
   els.homeName.addEventListener("change", () => updateNameFromInline("home"));

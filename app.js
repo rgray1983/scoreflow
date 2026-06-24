@@ -106,6 +106,7 @@ let applyingRemote = false;
 let liveReady = false;
 let remoteTimer = null;
 let initialSetupActive = false;
+let setupComplete = false;
 let splashClosed = false;
 
 function hideSplash() {
@@ -153,10 +154,15 @@ function beginInitialPortraitSetup() {
   openSettings();
 }
 
+function updateRotateScreenState() {
+  document.body.classList.toggle("needs-rotate", !isViewer && setupComplete && isPortraitOrientation() && !document.body.classList.contains("setup-active"));
+}
+
 function endInitialPortraitSetup() {
-  if (!initialSetupActive) return;
   initialSetupActive = false;
+  setupComplete = true;
   document.body.classList.remove("setup-active");
+  updateRotateScreenState();
 }
 
 function publicState() {
@@ -569,7 +575,10 @@ function saveSettings() {
 
 function openSettings() {
   if (isViewer) return;
-  if (isPortraitOrientation()) document.body.classList.add("setup-active");
+  if (isPortraitOrientation()) {
+    document.body.classList.add("setup-active");
+    document.body.classList.remove("needs-rotate");
+  }
   els.titleInput.value = state.matchTitle;
   els.homeNameSetting.value = state.homeName;
   els.awayNameSetting.value = state.awayName;
@@ -794,7 +803,10 @@ function wireEvents() {
     input?.addEventListener("click", selectExistingText);
   });
   els.settingsDialog.addEventListener("close", () => {
-    if (!initialSetupActive) document.body.classList.remove("setup-active");
+    if (!initialSetupActive) {
+      document.body.classList.remove("setup-active");
+      updateRotateScreenState();
+    }
   });
   $("createLiveBtn").addEventListener("click", createLiveGame);
   $("copyLinkBtn").addEventListener("click", copyViewerLink);
@@ -809,6 +821,11 @@ function wireEvents() {
   });
   window.addEventListener("resize", () => {
     if (state.confettiRunning) startConfetti();
+    updateRotateScreenState();
+  });
+
+  window.addEventListener("orientationchange", () => {
+    window.setTimeout(updateRotateScreenState, 160);
   });
 }
 
@@ -839,12 +856,13 @@ async function boot() {
     els.liveStatus.textContent = "Offline Practice Mode";
   }
   applyViewerMode();
+  updateRotateScreenState();
   registerServiceWorker();
 
   window.setTimeout(() => {
     hideSplash();
     requestAnimationFrame(beginInitialPortraitSetup);
-  }, 1250);
+  }, 3000);
 }
 
 boot();

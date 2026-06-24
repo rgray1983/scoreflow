@@ -990,3 +990,29 @@ body.splash-done .splash-screen {
     height: 126px;
   }
 }
+
+
+/* Smart rotate-state restore: after portrait setup is saved, show the rotate screen again until landscape. */
+body.needs-rotate .rotate-message {
+  display: grid !important;
+}
+
+body.needs-rotate .app-shell {
+  filter: blur(7px);
+  transform: scale(1.02);
+}
+
+body.setup-active.needs-rotate .rotate-message {
+  display: none !important;
+}
+
+@media (orientation: landscape) {
+  body.needs-rotate .rotate-message {
+    display: none !important;
+  }
+
+  body.needs-rotate .app-shell {
+    filter: none;
+    transform: none;
+  }
+}

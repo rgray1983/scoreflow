@@ -1,5 +1,6 @@
 import { firebaseConfig } from "./firebase-config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js";
 import {
   getFirestore,
   doc,
@@ -100,11 +101,15 @@ function selectExistingText(event) {
 }
 
 let db = null;
+let auth = null;
+let authUser = null;
+let authReadyPromise = null;
 let liveGameId = GAME_ID_FROM_URL || "";
 let unsubscribeLive = null;
 let applyingRemote = false;
 let liveReady = false;
 let remoteTimer = null;
+let legacyClaimAttempted = false;
 let initialSetupActive = false;
 let setupComplete = false;
 let splashClosed = false;
@@ -135,12 +140,40 @@ function initFirebase() {
   if (!hasFirebaseConfig()) return false;
   try {
     const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
     db = getFirestore(app);
+    authReadyPromise = new Promise((resolve) => {
+      onAuthStateChanged(auth, async (user) => {
+        if (user) {
+          authUser = user;
+          resolve(user);
+          return;
+        }
+
+        try {
+          const credential = await signInAnonymously(auth);
+          authUser = credential.user;
+          resolve(credential.user);
+        } catch (error) {
+          console.error(error);
+          resolve(null);
+        }
+      });
+    });
     return true;
   } catch (error) {
     console.error(error);
     return false;
   }
+}
+
+async function ensureFirebaseAuth() {
+  if (!authReadyPromise) return null;
+  return authReadyPromise;
+}
+
+function liveSyncBlockedMessage() {
+  return "Live sharing needs Firebase sign-in. Enable Anonymous Authentication in the Firebase console, then reload.";
 }
 
 function isPortraitOrientation() {
@@ -242,12 +275,20 @@ async function createLiveGame() {
     return;
   }
 
+  const user = await ensureFirebaseAuth();
+  if (!user) {
+    els.firebaseNote.textContent = liveSyncBlockedMessage();
+    toast("Firebase sign-in failed", true);
+    return;
+  }
+
   if (!liveGameId) {
     liveGameId = `game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   }
 
   await setDoc(liveDocRef(), {
     ...publicState(),
+    ownerUid: user.uid,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     updatedAtMs: Date.now()
@@ -270,12 +311,29 @@ function queueRemoteUpdate() {
 
 async function pushRemoteUpdate() {
   if (!db || !liveGameId || isViewer || applyingRemote) return;
+  const user = await ensureFirebaseAuth();
+  if (!user) {
+    els.liveStatus.textContent = "Live sync blocked";
+    toast("Firebase sign-in failed", true);
+    return;
+  }
+
   try {
-    await setDoc(liveDocRef(), {
+    const payload = {
       ...publicState(),
       updatedAt: serverTimestamp(),
       updatedAtMs: Date.now()
-    }, { merge: true });
+    };
+
+    if (!legacyClaimAttempted) {
+      const existing = await getDoc(liveDocRef());
+      if (existing.exists() && !existing.data().ownerUid) {
+        payload.ownerUid = user.uid;
+      }
+      legacyClaimAttempted = true;
+    }
+
+    await setDoc(liveDocRef(), payload, { merge: true });
     liveReady = true;
     els.liveStatus.textContent = "Live Scorer Mode · Synced";
   } catch (error) {
@@ -287,6 +345,14 @@ async function pushRemoteUpdate() {
 
 async function startLiveListener() {
   if (!db || !liveGameId) return;
+
+  const user = await ensureFirebaseAuth();
+  if (!user) {
+    els.liveStatus.textContent = isViewer ? "Live viewer blocked" : "Live sync blocked";
+    toast("Firebase sign-in failed", true);
+    return;
+  }
+
   unsubscribeLive?.();
   const ref = liveDocRef();
   const snap = await getDoc(ref);
@@ -296,7 +362,13 @@ async function startLiveListener() {
       toast("Game link not found", true);
       return;
     }
-    await setDoc(ref, { ...publicState(), createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    await setDoc(ref, {
+      ...publicState(),
+      ownerUid: user.uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedAtMs: Date.now()
+    });
   }
   els.viewerLink.value = buildViewerLink();
   liveReady = true;

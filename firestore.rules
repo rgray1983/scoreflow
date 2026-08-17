@@ -1,0 +1,100 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidGameId(gameId) {
+      return gameId.matches('^game-[a-z0-9]+-[a-z0-9]+$');
+    }
+
+    function isNonNegativeInt(value, max) {
+      return value is int && value >= 0 && value <= max;
+    }
+
+    function isShortString(value, maxLen) {
+      return value is string && value.size() <= maxLen;
+    }
+
+    function isHexColor(value) {
+      return value is string && value.matches('^#[0-9A-Fa-f]{6}$');
+    }
+
+    function isValidMatchFormat(value) {
+      return value is string && value in ['club', 'highschool'];
+    }
+
+    function hasValidVolleyballGameFields(data) {
+      return isNonNegativeInt(data.homeScore, 999)
+        && isNonNegativeInt(data.awayScore, 999)
+        && isNonNegativeInt(data.homeSets, 5)
+        && isNonNegativeInt(data.awaySets, 5)
+        && isNonNegativeInt(data.setNumber, 5)
+        && isNonNegativeInt(data.winBy, 10)
+        && isNonNegativeInt(data.setsToWin, 5)
+        && isNonNegativeInt(data.matchSets, 5)
+        && isValidMatchFormat(data.matchFormat)
+        && isShortString(data.lastAlert, 120)
+        && isHexColor(data.homeColor)
+        && isHexColor(data.awayColor)
+        && isShortString(data.matchTitle, 80)
+        && isShortString(data.homeName, 60)
+        && isShortString(data.awayName, 60)
+        && isShortString(data.winner, 10)
+        && isShortString(data.setFlashTeam, 10)
+        && isNonNegativeInt(data.setFlashId, 9999999999999)
+        && data.updatedAtMs is int;
+    }
+
+    function hasValidCreateTimestamps(data) {
+      return data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+
+    function hasValidUpdateTimestamp(data) {
+      return data.updatedAt is timestamp;
+    }
+
+    function ownsGame(data) {
+      return isSignedIn() && ('ownerUid' in data) && data.ownerUid == request.auth.uid;
+    }
+
+    function canClaimLegacyGame() {
+      return isSignedIn()
+        && !('ownerUid' in resource.data)
+        && request.resource.data.ownerUid == request.auth.uid;
+    }
+
+    function ownerUidIsImmutable() {
+      return !('ownerUid' in resource.data)
+        || request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    match /volleyballGames/{gameId} {
+      allow read: if isSignedIn() && isValidGameId(gameId);
+
+      allow create: if isSignedIn()
+        && isValidGameId(gameId)
+        && ownsGame(request.resource.data)
+        && hasValidVolleyballGameFields(request.resource.data)
+        && hasValidCreateTimestamps(request.resource.data);
+
+      allow update: if isSignedIn()
+        && isValidGameId(gameId)
+        && ownerUidIsImmutable()
+        && (ownsGame(resource.data) || canClaimLegacyGame())
+        && hasValidVolleyballGameFields(request.resource.data)
+        && hasValidUpdateTimestamp(request.resource.data)
+        && (!('createdAt' in resource.data) || request.resource.data.createdAt == resource.data.createdAt);
+
+      allow delete: if isSignedIn()
+        && isValidGameId(gameId)
+        && ownsGame(resource.data);
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

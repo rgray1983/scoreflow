@@ -11,7 +11,8 @@ service cloud.firestore {
     }
 
     function isNonNegativeInt(value, max) {
-      return value is int && value >= 0 && value <= max;
+      // The web SDK stores whole numbers as floats, so accept int or float.
+      return value is number && value >= 0 && value <= max && value == int(value);
     }
 
     function isShortString(value, maxLen) {
@@ -45,7 +46,7 @@ service cloud.firestore {
         && isShortString(data.winner, 10)
         && isShortString(data.setFlashTeam, 10)
         && isNonNegativeInt(data.setFlashId, 9999999999999)
-        && data.updatedAtMs is int;
+        && isNonNegativeInt(data.updatedAtMs, 9999999999999);
     }
 
     function hasValidCreateTimestamps(data) {

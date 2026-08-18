@@ -176,6 +176,11 @@ function liveSyncBlockedMessage() {
   return "Live sharing needs Firebase sign-in. Enable Anonymous Authentication in the Firebase console, then reload.";
 }
 
+function firebaseErrorMessage(error, fallback) {
+  const code = error?.code ? ` (${error.code})` : "";
+  return `${fallback}${code}`;
+}
+
 function isPortraitOrientation() {
   return window.matchMedia("(orientation: portrait)").matches;
 }
@@ -286,13 +291,20 @@ async function createLiveGame() {
     liveGameId = `game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
   }
 
-  await setDoc(liveDocRef(), {
-    ...publicState(),
-    ownerUid: user.uid,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-    updatedAtMs: Date.now()
-  }, { merge: true });
+  try {
+    await setDoc(liveDocRef(), {
+      ...publicState(),
+      ownerUid: user.uid,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      updatedAtMs: Date.now()
+    }, { merge: true });
+  } catch (error) {
+    console.error(error);
+    els.firebaseNote.textContent = firebaseErrorMessage(error, "Could not create the live game.");
+    toast("Live game create failed", true);
+    return;
+  }
 
   els.viewerLink.value = buildViewerLink();
   els.firebaseNote.textContent = "Live game created. Share the viewer link with family.";
@@ -339,7 +351,7 @@ async function pushRemoteUpdate() {
   } catch (error) {
     console.error(error);
     els.liveStatus.textContent = "Live sync failed";
-    toast("Live update failed", true);
+    toast(firebaseErrorMessage(error, "Live update failed"), true);
   }
 }
 
@@ -362,13 +374,20 @@ async function startLiveListener() {
       toast("Game link not found", true);
       return;
     }
-    await setDoc(ref, {
-      ...publicState(),
-      ownerUid: user.uid,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      updatedAtMs: Date.now()
-    });
+    try {
+      await setDoc(ref, {
+        ...publicState(),
+        ownerUid: user.uid,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        updatedAtMs: Date.now()
+      });
+    } catch (error) {
+      console.error(error);
+      els.liveStatus.textContent = "Live sync failed";
+      toast(firebaseErrorMessage(error, "Live update failed"), true);
+      return;
+    }
   }
   els.viewerLink.value = buildViewerLink();
   liveReady = true;

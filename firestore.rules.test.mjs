@@ -140,6 +140,22 @@ test("legacy game without ownerUid can be claimed once by an authenticated score
   }));
 });
 
+test("accepts whole numbers written as floats from the web SDK", async () => {
+  const owner = testEnv.authenticatedContext("owner-float-user");
+  const ref = doc(owner.firestore(), "volleyballGames/game-mabc123-flt01");
+
+  await assertSucceeds(setDoc(ref, {
+    ...sampleGame({
+      homeScore: 12.0,
+      awayScore: 10.0,
+      updatedAtMs: Date.now() + 0.0
+    }),
+    ownerUid: "owner-float-user",
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  }));
+});
+
 test("rejects invalid game ids and malformed score payloads", async () => {
   const badIdOwner = testEnv.authenticatedContext("owner-user-bad-id");
   const badIdRef = doc(badIdOwner.firestore(), "volleyballGames/not-a-valid-id");
